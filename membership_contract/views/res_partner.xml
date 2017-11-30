@@ -19,10 +19,10 @@
             </field>
             <notebook
                 position="inside"
-                attrs="{'invisible': [('membership','=',False)]}"
                 >
                 <page
                     string="Membership"
+                    attrs="{'invisible': [('membership','=',False)]}"
                     >
                     <group colspan="6" col="4">
                         <separator

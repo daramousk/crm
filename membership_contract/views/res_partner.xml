@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record
+        id="res_partner_membership_form"
+        model="ir.ui.view">
+        <field name="name">res.partner.membership.form</field>
+        <field name="model">res.partner</field>
+        <field name="type">form</field>
+        <field
+            name="inherit_id"
+            ref="base.view_partner_form"
+            />
+        <field
+            name="arch"
+            type="xml">
+            <field name="category_id" position="after">
+                <field name="membership" />
+            </field>
+            <notebook
+                position="inside"
+                attrs="{'invisible': [('membership','=',False)]}"
+                >
+                <page
+                    string="Membership"
+                    >
+                    <group colspan="6" col="4">
+                        <separator
+                            string="Membership contract lines"
+                            colspan="4"
+                            />
+                        <field
+                            name="membership_line_ids"
+                            nolabel="1"
+                            colspan="4"
+                            >
+                            <tree>
+                                <field name="product_id" />
+                                <field name="date_start" />
+                                <field name="date_end" />
+                            </tree>
+                        </field>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+</odoo>

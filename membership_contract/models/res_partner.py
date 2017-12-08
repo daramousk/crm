@@ -14,7 +14,8 @@ class ResPartner(models.Model):
 
     membership = fields.Boolean(
         string='Is member?',
-        compute='_compute_membership')
+        compute='_compute_membership',
+        store=True)
     membership_line_ids = fields.One2many(
         comodel_name='account.analytic.invoice.line',
         inverse_name='partner_id',

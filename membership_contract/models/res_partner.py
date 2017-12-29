@@ -62,4 +62,3 @@ class ResPartner(models.Model):
                 'product_id': product.id,
                 'product_uom_qty': quantity,
                 'pricelist_id': pricelist.id})
-

@@ -14,6 +14,6 @@ class ResPartner(models.Model):
             if not this.membership:
                 # Might still be member through partner above
                 for partner_above in this.partner_above_ids:
-                    if partner_above.membership:
+                    if partner_above.partner_above_id.membership:
                         this.membership = True
                         break

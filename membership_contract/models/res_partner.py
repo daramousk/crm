@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2017 Therp BV <https://therp.nl>.
+# Copyright 2017-2018 Therp BV <https://therp.nl>.
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 from odoo import api, fields, models
 
@@ -9,11 +9,24 @@ class ResPartner(models.Model):
 
     @api.depends('membership_line_ids')
     def _compute_membership(self):
+        today = fields.Date.today()
         for this in self:
-            this.membership = bool(this.membership_line_ids)
+            this.membership = False
+            # Associate member in this module is a placeholder.
+            # Field needs to be filled in inherit models.
+            this.associate_member = False
+            for line in this.membership_line_ids:
+                if line.date_start <= today and line.date_end > today:
+                    this.membership = True
+                    break
 
     membership = fields.Boolean(
         string='Is member?',
+        compute='_compute_membership',
+        store=True)
+    associate_member = fields.Many2one(
+        comodel_name='res.partner'
+        string='Member via partner',
         compute='_compute_membership',
         store=True)
     membership_line_ids = fields.One2many(

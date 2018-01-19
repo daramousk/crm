@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2017 Therp BV <https://therp.nl>.
+# Copyright 2017-2018 Therp BV <https://therp.nl>.
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 from odoo import api, models
 
@@ -16,4 +16,5 @@ class ResPartner(models.Model):
                 for partner_above in this.partner_above_ids:
                     if partner_above.partner_above_id.membership:
                         this.membership = True
+                        this.associate_member = partner_above.partner_above_id
                         break

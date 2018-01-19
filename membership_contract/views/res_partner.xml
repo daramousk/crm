@@ -54,8 +54,8 @@
                             >
                             <tree>
                                 <field name="product_id" />
-                                <field name="date_start" />
-                                <field name="date_end" />
+                                <field name="active_date_start" />
+                                <field name="active_date_end" />
                             </tree>
                         </field>
                     </group>

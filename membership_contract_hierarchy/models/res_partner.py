@@ -30,6 +30,6 @@ class ResPartner(models.Model):
                     super(ResPartner, member)._compute_membership()
 
     hierarchy_membership = fields.Boolean(
-        string='Membership through hierarchy,
+        string='Membership through hierarchy',
         compute='_compute_membership',
         store=True)

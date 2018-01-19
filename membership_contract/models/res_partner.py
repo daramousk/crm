@@ -27,6 +27,7 @@ class ResPartner(models.Model):
         comodel_name='res.partner',
         string='Member via partner',
         compute='_compute_membership',
+        index=True,
         store=True)
     membership_line_ids = fields.One2many(
         comodel_name='account.analytic.invoice.line',

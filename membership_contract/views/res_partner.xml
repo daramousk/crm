@@ -38,7 +38,12 @@
                     string="Membership"
                     attrs="{'invisible': [('membership','=',False)]}"
                     >
-                    <field name="associate_member" />
+                    <group
+                        colspan="6" col="4"
+                        attrs="{'invisible': [('associate_member','=',False)]}"
+                        >
+                        <field name="associate_member" />
+                    </group>
                     <group
                         colspan="6" col="4"
                         attrs="{'invisible': [('associate_member','!=',False)]}"

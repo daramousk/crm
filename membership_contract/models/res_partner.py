@@ -9,14 +9,13 @@ class ResPartner(models.Model):
 
     @api.depends('membership_line_ids')
     def _compute_membership(self):
-        today = fields.Date.today()
         for this in self:
             this.membership = False
             # Associate member in this module is a placeholder.
             # Field needs to be filled in inherit models.
             this.associate_member = False
             for line in this.membership_line_ids:
-                if line.date_start <= today and line.date_end > today:
+                if line.active:  # Not dependend on active flag in context
                     this.membership = True
                     break
 
@@ -39,7 +38,7 @@ class ResPartner(models.Model):
     def _compute_membership_price(
         self, company_id, product, quantity, price_unit, tax_id, date):
         """Recompute price taking membership prices into account.
-        
+
         We will reuse the code Odoo has for computing the price unit per
         unit for a sale order line, by creating an in memory sale order.
         For each applicable membership pricelist, we will set this pricelist

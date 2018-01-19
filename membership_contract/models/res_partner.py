@@ -24,7 +24,7 @@ class ResPartner(models.Model):
         compute='_compute_membership',
         store=True)
     associate_member = fields.Many2one(
-        comodel_name='res.partner'
+        comodel_name='res.partner',
         string='Member via partner',
         compute='_compute_membership',
         store=True)
@@ -36,7 +36,7 @@ class ResPartner(models.Model):
 
     @api.multi
     def _compute_membership_price(
-        self, company_id, product, quantity, price_unit, tax_id, date):
+            self, company_id, product, quantity, price_unit, tax_id, date):
         """Recompute price taking membership prices into account.
 
         We will reuse the code Odoo has for computing the price unit per

@@ -7,33 +7,40 @@ from odoo import api, fields, models
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    @api.depends('membership_line_ids')
-    def _compute_membership(self):
-        for this in self:
-            this.membership = False
-            # Associate member in this module is a placeholder.
-            # Field needs to be filled in inherit models.
-            this.associate_member = False
-            for line in this.membership_line_ids:
-                if line.active:  # Not dependend on active flag in context
-                    this.membership = True
-                    break
-
     membership = fields.Boolean(
         string='Is member?',
-        compute='_compute_membership',
-        store=True)
+        readonly=True)
     associate_member = fields.Many2one(
         comodel_name='res.partner',
         string='Member via partner',
-        compute='_compute_membership',
-        index=True,
-        store=True)
+        readonly=True,
+        index=True)
     membership_line_ids = fields.One2many(
         comodel_name='account.analytic.invoice.line',
         inverse_name='partner_id',
         domain=[('membership', '=', True)],
         string='Membership contract lines')
+
+    @api.multi
+    def membership_change_trigger(self):
+        """Allows other models to react on change in membership state.
+
+        This method is meant to be overridden in other modules.
+        """
+        pass
+
+    @api.multi
+    def _compute_membership(self):
+        for this in self:
+            save_membership = this.membership
+            membership = False
+            for line in this.membership_line_ids:
+                if line.active:  # Not dependend on active flag in context
+                    this.membership = True
+                    break
+            if membership != save_membership:
+                super(ResPartner, this).write({'membership': membership})
+                this.membership_change_trigger()
 
     @api.multi
     def _compute_membership_price(

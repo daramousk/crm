@@ -7,29 +7,42 @@ from odoo import api, fields, models
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    @api.depends('membership_line_ids')
+    @api.multi
+    def membership_change_trigger(self):
+        """Compute membership for members below this one."""
+        hierarchy_model = self.env['res.partner.relation.hierarchy']
+        for this in self:
+            partners_below = hierarchy_model.search([
+                ('partner_id', '=', this.id)])
+            for partner_below in partners_below:
+                partner_below.partner_below_id._compute_membership()
+
+    @api.multi
     def _compute_membership(self):
         for this in self:
-            this.hierarchy_membership = False
-            save_membership = this.membership
             super(ResPartner, this)._compute_membership()
-            if not this.membership:
+            if this.membership:
+                # Partner is a direct member
+                if this.hierarchy_membership or this.associate_member:
+                    super(ResPartner, this).write({
+                        'associate_member': False,
+                        'hierarchy_membership': False})
+            else:
                 # Might still be member through partner above
                 for partner_above in this.partner_above_ids:
-                    if partner_above.partner_above_id.membership:
-                        this.membership = True
-                        this.hierarchy_membership = True
-                        this.associate_member = partner_above.partner_above_id
+                    associate = partner_above.partner_above_id
+                    # Only write real changes
+                    if associate.membership and (
+                            not this.membership or
+                            this.associate_member != associate or
+                            not this.hierarchy_membership):
+                        super(ResPartner, this).write({
+                            'membership': True,
+                            'associate_member': associate.id,
+                            'hierarchy_membership': True})
+                        this.membership_change_trigger()
                         break
-            if this.membership != save_membership:
-                # We might need to change membership of associates
-                linked_members = self.search([
-                    ('associate_member', '=', this.id),
-                    ('hierarchy_membership', '=', True)])
-                for member in linked_members:
-                    super(ResPartner, member)._compute_membership()
 
     hierarchy_membership = fields.Boolean(
         string='Membership through hierarchy',
-        compute='_compute_membership',
-        store=True)
+        readonly=True)

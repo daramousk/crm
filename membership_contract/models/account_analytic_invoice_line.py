@@ -13,15 +13,21 @@ class AccountAnalyticInvoiceLine(models.Model):
         store=True)
 
     @api.model
-    def active_refresh_post_process(self, active_change_datetime):
+    def active_change_trigger(self):
         """Postprocess records immediately after changing active field.
 
         Make sure membership recomputed for affected partners.
         """
-        super(AccountAnalyticInvoiceLine, self).active_refresh_post_process(
-            active_change_datetime)
-        lines = self.search([
-            ('active_change_datetime', '=', active_change_datetime)])
-        for line in lines:
-            if line.membership:
-                line.partner_id._compute_membership()
+        super(AccountAnalyticInvoiceLine, self).active_change_trigger()
+        for this in self:
+            if this.membership:
+                this.partner_id._compute_membership()
+
+    @api.multi
+    def unlink(self):
+        """Unlinking might effect membership."""
+        for this in self:
+            if this.membership:
+                partner = this.partner_id
+                this.unlink()
+                partner._compute_membership()

@@ -13,7 +13,7 @@ class ResPartner(models.Model):
         hierarchy_model = self.env['res.partner.relation.hierarchy']
         for this in self:
             partners_below = hierarchy_model.search([
-                ('partner_id', '=', this.id)])
+                ('partner_above_id', '=', this.id)])
             for partner_below in partners_below:
                 partner_below.partner_below_id._compute_membership()
 

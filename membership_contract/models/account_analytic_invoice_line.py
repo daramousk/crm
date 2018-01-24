@@ -29,5 +29,5 @@ class AccountAnalyticInvoiceLine(models.Model):
         for this in self:
             if this.membership:
                 partner = this.partner_id
-                this.unlink()
+                super(AccountAnalyticInvoiceLine, this).unlink()
                 partner._compute_membership()

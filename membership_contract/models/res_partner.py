@@ -45,13 +45,15 @@ class ResPartner(models.Model):
     @api.model
     def create(self, vals):
         new_rec = super(ResPartner, self).create(vals)
-        new_rec._compute_membership()
+        if 'membership' not in vals:
+            new_rec._compute_membership()
         return new_rec
 
     @api.multi
     def write(self, vals):
         result = super(ResPartner, self).write(vals)
-        self._compute_membership()
+        if 'membership' not in vals:
+            self._compute_membership()
         return result
 
     @api.multi

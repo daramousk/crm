@@ -27,6 +27,7 @@ class ResPartner(models.Model):
                 # Partner is a direct member
                 if this.hierarchy_membership or this.associate_member:
                     super(ResPartner, this).write({
+                        'membership': True,
                         'associate_member': False,
                         'hierarchy_membership': False})
             else:

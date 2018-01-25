@@ -9,11 +9,12 @@ class ResPartner(models.Model):
 
     @api.multi
     def membership_change_trigger(self):
-        """Compute membership for members below this one."""
+        """Compute membership for members immediately below this one."""
         hierarchy_model = self.env['res.partner.relation.hierarchy']
         for this in self:
             partners_below = hierarchy_model.search([
-                ('partner_above_id', '=', this.id)])
+                ('partner_above_id', '=', this.id),
+                ('level', '=', 1)])
             for partner_below in partners_below:
                 partner_below.partner_below_id._compute_membership()
 

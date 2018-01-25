@@ -36,7 +36,7 @@ class ResPartner(models.Model):
             membership = False
             for line in this.membership_line_ids:
                 if line.active:  # Not dependend on active flag in context
-                    this.membership = True
+                    membership = True
                     break
             if membership != save_membership:
                 super(ResPartner, this).write({'membership': membership})

@@ -22,6 +22,7 @@ class ResPartner(models.Model):
     def _compute_membership(self):
         for this in self:
             super(ResPartner, this)._compute_membership()
+            save_membership = this.membership
             if this.membership:
                 # Partner is a direct member
                 if this.hierarchy_membership or this.associate_member:
@@ -41,8 +42,9 @@ class ResPartner(models.Model):
                             'membership': True,
                             'associate_member': associate.id,
                             'hierarchy_membership': True})
-                        this.membership_change_trigger()
                         break
+            if this.membership != save_membership:
+                this.membership_change_trigger()
 
     hierarchy_membership = fields.Boolean(
         string='Membership through hierarchy',

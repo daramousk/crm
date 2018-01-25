@@ -42,6 +42,18 @@ class ResPartner(models.Model):
                 super(ResPartner, this).write({'membership': membership})
                 this.membership_change_trigger()
 
+    @api.model
+    def create(self, vals):
+        new_rec = super(ResPartner, self).create(vals)
+        new_rec._compute_membership()
+        return new_rec
+
+    @api.multi
+    def write(self, vals):
+        result = super(ResPartner, self).write(vals)
+        self._compute_membership()
+        return result
+
     @api.multi
     def _compute_membership_price(
             self, company_id, product, quantity, price_unit, tax_id, date):

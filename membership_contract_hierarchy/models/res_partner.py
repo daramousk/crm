@@ -8,7 +8,7 @@ class ResPartner(models.Model):
     _inherit = 'res.partner'
 
     @api.multi
-    def membership_change_trigger(self):
+    def membership_change_trigger(self, create=False):
         """Compute membership for members immediately below this one."""
         hierarchy_model = self.env['res.partner.relation.hierarchy']
         for this in self:
@@ -16,12 +16,13 @@ class ResPartner(models.Model):
                 ('partner_above_id', '=', this.id),
                 ('level', '=', 1)])
             for partner_below in partners_below:
-                partner_below.partner_below_id._compute_membership()
+                partner_below.partner_below_id._compute_membership(
+                    create=create)
 
     @api.multi
-    def _compute_membership(self):
+    def _compute_membership(self, create=False):
         for this in self:
-            super(ResPartner, this)._compute_membership()
+            super(ResPartner, this)._compute_membership(create=create)
             save_membership = this.membership
             if this.membership:
                 # Partner is a direct member
@@ -44,8 +45,8 @@ class ResPartner(models.Model):
                             'associate_member': associate.id,
                             'hierarchy_membership': True})
                         break
-            if this.membership != save_membership:
-                this.membership_change_trigger()
+            if this.membership != save_membership or create:
+                this.membership_change_trigger(create=create)
 
     hierarchy_membership = fields.Boolean(
         string='Membership through hierarchy',

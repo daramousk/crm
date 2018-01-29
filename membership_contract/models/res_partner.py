@@ -22,7 +22,7 @@ class ResPartner(models.Model):
         string='Membership contract lines')
 
     @api.multi
-    def membership_change_trigger(self):
+    def membership_change_trigger(self, create=False):
         """Allows other models to react on change in membership state.
 
         This method is meant to be overridden in other modules.
@@ -30,7 +30,7 @@ class ResPartner(models.Model):
         pass
 
     @api.multi
-    def _compute_membership(self):
+    def _compute_membership(self, create=False):
         for this in self:
             save_membership = this.membership
             membership = False
@@ -38,15 +38,15 @@ class ResPartner(models.Model):
                 if line.active:  # Not dependend on active flag in context
                     membership = True
                     break
-            if membership != save_membership:
+            if membership != save_membership or create:
                 super(ResPartner, this).write({'membership': membership})
-                this.membership_change_trigger()
+                this.membership_change_trigger(create=create)
 
     @api.model
     def create(self, vals):
         new_rec = super(ResPartner, self).create(vals)
         if 'membership' not in vals:
-            new_rec._compute_membership()
+            new_rec._compute_membership(create=True)
         return new_rec
 
     @api.multi

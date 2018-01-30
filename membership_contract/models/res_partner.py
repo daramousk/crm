@@ -32,11 +32,16 @@ class ResPartner(models.Model):
     @api.multi
     def _compute_membership(self, create=False):
         # Prevent recursion due to repeated writes
-        guard_dict = self.env.context['guard_dict']  # should be present
-        inner_guard_dict = guard_dict.get('_compute_membership', {})
-        if not inner_guard_dict:
+        guarded_self = self
+        guard_dict = self.env.context.get('guard_dict', None)
+        if guard_dict is None:
+            guard_dict = {}
+            guarded_self = self.with_context(guard_dict=guard_dict)
+        inner_guard_dict = guard_dict.get('_compute_membership', None)
+        if inner_guard_dict is None:
+            inner_guard_dict = {}
             guard_dict['_compute_membership'] = inner_guard_dict
-        for this in self:
+        for this in guarded_self:
             if this.id in inner_guard_dict:
                 continue
             inner_guard_dict[this.id] = True
@@ -53,17 +58,13 @@ class ResPartner(models.Model):
     @api.model
     def create(self, vals):
         new_rec = super(ResPartner, self).create(vals)
-        guard_dict = self.env.context.get('guard_dict', {})
-        new_rec.with_context(
-            guard_dict=guard_dict)._compute_membership(create=True)
+        new_rec._compute_membership(create=True)
         return new_rec
 
     @api.multi
     def write(self, vals):
         result = super(ResPartner, self).write(vals)
-        guard_dict = self.env.context.get('guard_dict', {})
-        self.with_context(
-            guard_dict=guard_dict)._compute_membership()
+        self._compute_membership()
         return result
 
     @api.multi

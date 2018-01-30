@@ -35,7 +35,7 @@ class AccountAnalyticInvoiceLine(models.Model):
 
     @api.multi
     def write(self, vals):
-        if not 'membership' in vals:
+        if 'membership' not in vals:
             return super(AccountAnalyticInvoiceLine, self).write(vals)
         for this in self:
             save_membership = this.membership

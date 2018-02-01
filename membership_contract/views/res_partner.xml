@@ -59,6 +59,8 @@
                             >
                             <tree>
                                 <field name="product_id" />
+                                <field name="quantity" />
+                                <field name="price_subtotal" />
                                 <field name="active_date_start" />
                                 <field name="active_date_end" />
                             </tree>

@@ -8,23 +8,27 @@ class ResPartner(models.Model):
     _inherit = 'res.partner'
 
     @api.multi
-    def membership_change_trigger(self):
-        """Compute membership for members below this one."""
+    def membership_change_trigger(self, create=False):
+        """Compute membership for members immediately below this one."""
         hierarchy_model = self.env['res.partner.relation.hierarchy']
         for this in self:
             partners_below = hierarchy_model.search([
-                ('partner_id', '=', this.id)])
+                ('partner_above_id', '=', this.id),
+                ('level', '=', 1)])
             for partner_below in partners_below:
-                partner_below.partner_below_id._compute_membership()
+                partner_below.partner_below_id._compute_membership(
+                    create=create)
 
     @api.multi
-    def _compute_membership(self):
+    def _compute_membership(self, create=False):
         for this in self:
-            super(ResPartner, this)._compute_membership()
+            super(ResPartner, this)._compute_membership(create=create)
+            save_membership = this.membership
             if this.membership:
                 # Partner is a direct member
                 if this.hierarchy_membership or this.associate_member:
                     super(ResPartner, this).write({
+                        'membership': True,
                         'associate_member': False,
                         'hierarchy_membership': False})
             else:
@@ -40,8 +44,9 @@ class ResPartner(models.Model):
                             'membership': True,
                             'associate_member': associate.id,
                             'hierarchy_membership': True})
-                        this.membership_change_trigger()
                         break
+            if this.membership != save_membership or create:
+                this.membership_change_trigger(create=create)
 
     hierarchy_membership = fields.Boolean(
         string='Membership through hierarchy',

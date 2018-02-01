@@ -17,6 +17,7 @@ class AccountAnalyticInvoiceLine(models.Model):
         """Postprocess records immediately after changing active field.
 
         Make sure membership recomputed for affected partners.
+        This method will also always be called on create.
         """
         super(AccountAnalyticInvoiceLine, self).active_change_trigger()
         for this in self:
@@ -24,10 +25,30 @@ class AccountAnalyticInvoiceLine(models.Model):
                 this.partner_id._compute_membership()
 
     @api.multi
+    def membership_change_trigger(self, create=False):
+        """Postprocess records immediately after changing membership field.
+
+        Make sure membership correctly set on partner.
+        """
+        for this in self:
+            this.partner_id._compute_membership(create=create)
+
+    @api.multi
+    def write(self, vals):
+        if 'membership' not in vals:
+            return super(AccountAnalyticInvoiceLine, self).write(vals)
+        for this in self:
+            save_membership = this.membership
+            super(AccountAnalyticInvoiceLine, this).write(vals)
+            if this.membership != save_membership:
+                this.membership_change_trigger()
+        return True
+
+    @api.multi
     def unlink(self):
         """Unlinking might effect membership."""
         for this in self:
             if this.membership:
                 partner = this.partner_id
-                this.unlink()
+                super(AccountAnalyticInvoiceLine, this).unlink()
                 partner._compute_membership()

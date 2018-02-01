@@ -22,7 +22,7 @@ class ResPartner(models.Model):
         string='Membership contract lines')
 
     @api.multi
-    def membership_change_trigger(self):
+    def membership_change_trigger(self, create=False):
         """Allows other models to react on change in membership state.
 
         This method is meant to be overridden in other modules.
@@ -30,17 +30,42 @@ class ResPartner(models.Model):
         pass
 
     @api.multi
-    def _compute_membership(self):
-        for this in self:
+    def _compute_membership(self, create=False):
+        # Prevent recursion due to repeated writes
+        guarded_self = self
+        guard_dict = self.env.context.get('guard_dict', None)
+        if guard_dict is None:
+            guard_dict = {}
+            guarded_self = self.with_context(guard_dict=guard_dict)
+        inner_guard_dict = guard_dict.get('_compute_membership', None)
+        if inner_guard_dict is None:
+            inner_guard_dict = {}
+            guard_dict['_compute_membership'] = inner_guard_dict
+        for this in guarded_self:
+            if this.id in inner_guard_dict:
+                continue
+            inner_guard_dict[this.id] = True
             save_membership = this.membership
             membership = False
             for line in this.membership_line_ids:
                 if line.active:  # Not dependend on active flag in context
-                    this.membership = True
+                    membership = True
                     break
-            if membership != save_membership:
+            if membership != save_membership or create:
                 super(ResPartner, this).write({'membership': membership})
-                this.membership_change_trigger()
+                this.membership_change_trigger(create=create)
+
+    @api.model
+    def create(self, vals):
+        new_rec = super(ResPartner, self).create(vals)
+        new_rec._compute_membership(create=True)
+        return new_rec
+
+    @api.multi
+    def write(self, vals):
+        result = super(ResPartner, self).write(vals)
+        self._compute_membership()
+        return result
 
     @api.multi
     def _compute_membership_price(

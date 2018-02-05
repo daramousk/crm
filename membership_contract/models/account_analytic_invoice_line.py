@@ -52,3 +52,5 @@ class AccountAnalyticInvoiceLine(models.Model):
                 partner = this.partner_id
                 super(AccountAnalyticInvoiceLine, this).unlink()
                 partner._compute_membership()
+            else:
+                super(AccountAnalyticInvoiceLine, this).unlink()

@@ -13,7 +13,7 @@
                 <xpath expr="//page[@string='Inventory']" position="after">
                     <page string="Claims">
                         <group name="Claims" string="Claims" >
-                            <field name="claim_ids" nolabel="1"/>
+                            <field name="claim_ids"/>
                         </group>
                     </page>
 

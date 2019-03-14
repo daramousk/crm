@@ -135,29 +135,20 @@ class TestPublication(common.SavepointCase):
         assigned_count = \
             distribution_model.get_product_contract_assigned_count(
                 product_newsletter.id, partner_jan.id)
-        self.assertEqual(assigned_count, 0)
-        subscription01 = distribution_model.create({
-            'product_id': product_newsletter.id,
-            'contract_partner_id': partner_jan.id,
-            'partner_id': partner_joris.id,
-            'copies': 10})
-        self.assertEqual(subscription01.contract_count, 40)
-        self.assertEqual(subscription01.assigned_count, 10)
-        self.assertEqual(subscription01.available_count, 30)
-        subscription02 = distribution_model.create({
-            'product_id': product_newsletter.id,
-            'contract_partner_id': partner_jan.id,
-            'partner_id': partner_corneel.id,
-            'copies': 10})
-        self.assertEqual(subscription02.contract_count, 40)
-        # Old entry should also be changed
-        self.assertEqual(subscription01.assigned_count, 20)
-        self.assertEqual(subscription01.available_count, 20)
-        with self.assertRaises(ValidationError):
-            distribution_model.create({
-                'product_id': product_newsletter.id,
-                'contract_partner_id': partner_jan.id,
-                'partner_id': partner_jan.id,
-                'copies': 30})
-        # Delivery for Corneel should be to his store.
-        self.assertIn('Wijnstraat', subscription02.contact_address)
+        self.assertEqual(assigned_count, 40)
+        # since product_count == assigned_count, all extra additions for
+        # partner_jan will fail.
+        # But since creations on assertRaises are commited for some reason
+        # we do not do them because they mess with our _limit_count
+        # https://github.com/odoo/odoo/issues/7570
+
+        # product_count _must_ be equal to assigned_count, we verified that
+        # this is true for changes done on account lines.
+        # Now let's make some changes on the distribution lists directly and
+        # verify again
+        lists = distribution_model.search([
+            ('product_id', '=', product_newsletter.id),
+            ('contract_partner_id', '=', partner_jan.id),
+        ])
+        lists.copies = 38
+        self.assertEquals(product_count, assigned_count)

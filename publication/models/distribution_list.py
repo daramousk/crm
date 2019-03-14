@@ -145,37 +145,74 @@ class DistributionList(models.Model):
     @api.model
     def create(self, vals):
         result = super(DistributionList, self).create(vals)
-        result._limit_count()
+        result._update_copies()
         return result
 
     @api.multi
     def write(self, vals):
         result = super(DistributionList, self).write(vals)
-        self._limit_count()
+        self._update_copies()
         return result
 
     @api.multi
-    def _limit_count(self):
-        """Limit number of copies send to amount set in contract lines.
+    def unlink(self):
+        result = super(DistributionList, self).unlink()
+        self._update_copies()
+        return result
 
-        It should be possible to make a constrains method of this function,
-        but for inexplicable reasons this does not work.
+    @api.multi
+    def _update_copies(self):
+        """The sum of the copies sent to a contract partner for a specific
+        product must be equal to the sum of the quantities allocated in all
+        this contract partner's active contracts.
         """
+        for rec in self:
+            # find the sum of copies to be sent to this contract_partner_id
+            max_qty = self.get_product_contract_count(
+                rec.product_id.id,
+                rec.contract_partner_id.id,
+            )
+            # find the sum of copies of the active distribution lists for the
+            # same product and compare them to max_qty
+            qty_d_list = self.get_product_contract_assigned_count(
+                rec.product_id.id,
+                rec.contract_partner_id.id,
+            )
+            # if max_qty == qty_d_list we are good,
+            # if max_qty < qty_d_list then _limit_count throws an error
+            # finally we only have to deal with max_qty > qty_d_list
+            if max_qty > qty_d_list:
+                d_list = self.search([
+                    ('contract_partner_id', '=', rec.contract_partner_id.id),
+                    ('partner_id', '=', rec.contract_partner_id.id),
+                    ('product_id', '=', rec.product_id.id),
+                ], limit=1)
+                if d_list:
+                    d_list.write({
+                        'copies': d_list.copies + (max_qty - qty_d_list)
+                    })
+                else:
+                    self.create({
+                        'contract_partner_id': rec.contract_partner_id.id,
+                        'partner_id': rec.contract_partner_id.id,
+                        'product_id': rec.product_id.id,
+                        'date_start': rec.date_start,
+                        'copies': max_qty - qty_d_list,
+                    })
+
+    @api.multi
+    @api.constrains('product_id', 'contract_partner_id', 'copies')
+    def _limit_count(self):
         for this in self:
-            # Do not use counts from 'this' as they probably have not
-            # been updated yet.
-            product = this.product_id
-            contract_partner = this.contract_partner_id
             contract_count = self.get_product_contract_count(
-                product.id, contract_partner.id)
+                this.product_id.id, this.contract_partner_id.id)
             assigned_count = self.get_product_contract_assigned_count(
-                product.id, contract_partner.id)
-            available_count = contract_count - assigned_count
-            if available_count < 0:
+                this.product_id.id, this.contract_partner_id.id)
+            if contract_count - assigned_count < 0:
                 raise ValidationError(_(
                     "Number of copies sent %d can not exceed contracted"
                     " number %d for partner %s and product %s" % (
                         assigned_count,
                         contract_count,
-                        contract_partner.display_name,
-                        product.display_name)))
+                        this.contract_partner_id.display_name,
+                        this.product_id.display_name)))
